@@ -5,6 +5,8 @@ import anime from 'animejs';
 import { Server, Database, Code, FolderOpen, MessageSquare, Activity, Zap, Cpu, HardDrive } from 'lucide-react';
 import RobotGuide from './RobotGuide';
 import ParticleSystem from './ParticleSystem';
+import RobotPath from './RobotPath';
+import Environment3D from './Environment3D';
 import MainServerCore from './rooms/MainServerCore';
 import CodeLaboratory from './rooms/CodeLaboratory';
 import DatabaseRoom from './rooms/DatabaseRoom';
@@ -26,6 +28,10 @@ const ServerHouseLanding: React.FC = () => {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [robotPosition, setRobotPosition] = useState({ x: 50, y: 50 });
   const [showRoomContent, setShowRoomContent] = useState(false);
+  const [isRobotMoving, setIsRobotMoving] = useState(false);
+  const [showPath, setShowPath] = useState(false);
+  const [pathStart, setPathStart] = useState({ x: 50, y: 50 });
+  const [pathEnd, setPathEnd] = useState({ x: 50, y: 50 });
   const landingRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
 
@@ -113,27 +119,34 @@ const ServerHouseLanding: React.FC = () => {
 
   const handleRoomClick = (room: Room) => {
     setSelectedRoom(room.id);
+    setIsRobotMoving(true);
+    
+    // Set path coordinates
+    const startPos = { x: robotPosition.x, y: robotPosition.y };
+    const targetPos = { x: room.position.x, y: room.position.y };
+    setPathStart(startPos);
+    setPathEnd(targetPos);
+    setShowPath(true);
     
     // Animate robot moving to the room
-    const targetX = room.position.x;
-    const targetY = room.position.y;
-    
     anime({
       targets: '.robot-guide',
-      translateX: `${targetX - robotPosition.x}%`,
-      translateY: `${targetY - robotPosition.y}%`,
+      translateX: `${targetPos.x - robotPosition.x}%`,
+      translateY: `${targetPos.y - robotPosition.y}%`,
       duration: 1500,
       easing: 'easeInOutCubic',
       complete: () => {
-        setRobotPosition({ x: targetX, y: targetY });
+        setRobotPosition({ x: targetPos.x, y: targetPos.y });
+        setIsRobotMoving(false);
         // Robot opens the room
         setTimeout(() => {
           setShowRoomContent(true);
-          // Animate room opening
+          // Animate room opening with 3D effect
           anime({
             targets: `.room-${room.id}`,
             scale: [1, 1.2, 1],
-            rotate: 360,
+            rotateY: [0, 360],
+            translateZ: [0, 50, 0],
             duration: 1000,
             easing: 'easeOutElastic',
           });
@@ -142,9 +155,20 @@ const ServerHouseLanding: React.FC = () => {
     });
   };
 
+  const handlePathComplete = () => {
+    setShowPath(false);
+  };
+
   const closeRoom = () => {
     setShowRoomContent(false);
     setSelectedRoom(null);
+    setShowPath(false);
+    
+    // Set return path
+    setPathStart({ x: robotPosition.x, y: robotPosition.y });
+    setPathEnd({ x: 50, y: 50 });
+    setShowPath(true);
+    setIsRobotMoving(true);
     
     // Return robot to center
     anime({
@@ -153,6 +177,10 @@ const ServerHouseLanding: React.FC = () => {
       translateY: '0%',
       duration: 1000,
       easing: 'easeInOutCubic',
+      complete: () => {
+        setIsRobotMoving(false);
+        setShowPath(false);
+      }
     });
     
     setRobotPosition({ x: 50, y: 50 });
@@ -205,21 +233,32 @@ const ServerHouseLanding: React.FC = () => {
   }
 
   return (
-    <div ref={landingRef} className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Particle System Background */}
-      <ParticleSystem />
-      
-      {/* Main Server House Interface */}
-      <div className="relative z-10 h-screen flex flex-col">
-        {/* Header */}
-       
+    <Environment3D isRoomOpen={showRoomContent} selectedRoom={selectedRoom || undefined}>
+      <div ref={landingRef} className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        {/* Particle System Background */}
+        <ParticleSystem />
+        
+        {/* Robot Path Animation */}
+        {showPath && (
+          <RobotPath
+            startPosition={pathStart}
+            endPosition={pathEnd}
+            isAnimating={showPath}
+            onPathComplete={handlePathComplete}
+          />
+        )}
+        
+        {/* Main Server House Interface */}
+        <div className="relative z-10 h-screen flex flex-col transform-3d">
+          {/* Header */}
+         
 
-        {/* Interactive Room Layout */}
-        <div ref={roomsRef} className="flex-1 relative">
-          {/* Robot Guide */}
-          <RobotGuide 
-            position={robotPosition}
-            isMoving={selectedRoom !== null}
+          {/* Interactive Room Layout */}
+          <div ref={roomsRef} className="flex-1 relative perspective-1000">
+            {/* Robot Guide */}
+            <RobotGuide 
+              position={robotPosition}
+              isMoving={isRobotMoving}
             onReturnHome={closeRoom}
           />
 
@@ -229,21 +268,22 @@ const ServerHouseLanding: React.FC = () => {
             return (
               <div
                 key={room.id}
-                className={`floating-room room-${room.id} absolute cursor-pointer transform hover:scale-110 transition-all duration-300`}
+                className={`floating-room room-${room.id} absolute cursor-pointer transform hover:scale-110 transition-all duration-300 room-3d float-3d`}
                 style={{
                   left: `${room.position.x}%`,
                   top: `${room.position.y}%`,
                   transform: 'translate(-50%, -50%)',
+                  animationDelay: `${Math.random() * 2}s`
                 }}
                 onClick={() => handleRoomClick(room)}
               >
                 {/* Room Container */}
-                <div className={`relative group`}>
+                <div className={`relative group hologram-effect`}>
                   {/* Glowing Background */}
-                  <div className={`absolute inset-0 bg-gradient-to-r ${room.color} rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
+                  <div className={`absolute inset-0 bg-gradient-to-r ${room.color} rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300 path-glow`} />
                   
                   {/* Room Icon */}
-                  <div className="relative bg-black/80 backdrop-blur-md rounded-xl p-6 border border-white/20 group-hover:border-white/40 transition-all duration-300">
+                  <div className="relative bg-black/80 backdrop-blur-md rounded-xl p-6 border border-white/20 group-hover:border-white/40 transition-all duration-300 transform-3d">
                     <IconComponent size={32} className="text-white mb-3" />
                     <h3 className="text-white font-semibold text-sm whitespace-nowrap">{room.name}</h3>
                     <p className="text-gray-400 text-xs mt-1 max-w-24 leading-tight">{room.description}</p>
@@ -307,7 +347,8 @@ const ServerHouseLanding: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+        </div>
+    </Environment3D>
   );
 };
 
