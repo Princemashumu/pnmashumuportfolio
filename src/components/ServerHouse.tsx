@@ -1,312 +1,353 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
-import { Brain, Database, Terminal, Rocket, Wifi, Shield, Cpu, Zap, Activity, Monitor } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
 import anime from 'animejs';
-
-// Room Components
 import ServerRoom from './rooms/ServerRoom';
 import DatabaseRoom from './rooms/DatabaseRoom';
 import CodeLaboratory from './rooms/CodeLaboratory';
-import MainServerCore from './rooms/MainServerCore';
 import ProjectWarehouse from './rooms/ProjectWarehouse';
 import CommunicationHub from './rooms/CommunicationHub';
 import SystemStatus from './rooms/SystemStatus';
-import ThreeEnvironment from './ThreeEnvironment';
-import RobotGuide from './RobotGuide';
 
 const ServerHouse: React.FC = () => {
-  const robotRef = useRef<HTMLDivElement>(null);
-  const hologramRef = useRef<HTMLDivElement>(null);
+  const houseRef = useRef<HTMLDivElement>(null);
+  const roomsRef = useRef<HTMLDivElement[]>([]);
+  const roboticElementsRef = useRef<HTMLDivElement[]>([]);
+  const hologramRef = useRef<HTMLDivElement[]>([]);
 
-  // Advanced State Management
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [selectedServer, setSelectedServer] = useState<string | null>(null);
-  const [isModuleOpen, setIsModuleOpen] = useState(false);
-  const [robotMode, setRobotMode] = useState<'idle' | 'scanning' | 'processing' | 'presenting'>('idle');
-  const [systemStatus, setSystemStatus] = useState('BOOTING');
-  const [aiVoiceActive, setAiVoiceActive] = useState(false);
-
-  // Server House Layout
-  const servers = [
-    { 
-      id: 'neural', 
-      name: 'NEURAL CORE', 
-      component: ServerRoom, 
-      color: 'cyan', 
-      position: { x: 0, y: 0, z: 200 },
-      icon: Brain,
-      description: 'AI-Powered About System',
-      difficulty: 'LEGENDARY'
-    },
-    { 
-      id: 'quantum', 
-      name: 'QUANTUM DB', 
-      component: DatabaseRoom, 
-      color: 'green', 
-      position: { x: -400, y: 100, z: 0 },
-      icon: Database,
-      description: 'Advanced Data Architecture',
-      difficulty: 'EXPERT'
-    },
-    { 
-      id: 'matrix', 
-      name: 'CODE MATRIX', 
-      component: CodeLaboratory, 
-      color: 'purple', 
-      position: { x: 400, y: 100, z: 0 },
-      icon: Terminal,
-      description: 'Development Nexus',
-      difficulty: 'MASTER'
-    },
-    { 
-      id: 'fusion', 
-      name: 'PROJECT FUSION', 
-      component: ProjectWarehouse, 
-      color: 'yellow', 
-      position: { x: -300, y: -100, z: -300 },
-      icon: Rocket,
-      description: 'Innovation Showcase',
-      difficulty: 'PRO'
-    },
-    { 
-      id: 'nexus', 
-      name: 'COMM NEXUS', 
-      component: CommunicationHub, 
-      color: 'pink', 
-      position: { x: 300, y: -100, z: -300 },
-      icon: Wifi,
-      description: 'Communication Hub',
-      difficulty: 'ADVANCED'
-    },
-    { 
-      id: 'sentinel', 
-      name: 'SYSTEM SENTINEL', 
-      component: SystemStatus, 
-      color: 'blue', 
-      position: { x: 0, y: -200, z: -500 },
-      icon: Shield,
-      description: 'Monitoring Console',
-      difficulty: 'ELITE'
-    }
-  ];
-
-  // Competitive AI Module Handler
-  const handleModuleAccess = useCallback((moduleId: string) => {
-    setRobotMode('scanning');
-    
-    // AI Voice Activation
-    setAiVoiceActive(true);
-    setTimeout(() => setAiVoiceActive(false), 3000);
-
-    if (selectedModule === moduleId) {
-      // Close module
-      setSelectedModule(null);
-      setIsModuleOpen(false);
-      setRobotMode('idle');
-      
-      // Advanced closing animation
-      anime.timeline({
-        easing: 'easeOutExpo',
-        duration: 1000
-      })
-      .add({
-        targets: `.robot-module-${moduleId}`,
-        scale: [1.5, 1],
-        rotateY: [45, 0],
-        translateY: [0, 0]
-      })
-      .add({
-        targets: `.module-hologram-${moduleId}`,
-        opacity: [1, 0],
-        scale: [1, 0],
-        rotateZ: [0, 360]
-      }, '-=500');
-      
-    } else {
-      // Open new module
-      setSelectedModule(moduleId);
-      setIsModuleOpen(true);
-      setRobotMode('presenting');
-      
-      // Revolutionary opening animation
-      anime.timeline({
+  useEffect(() => {
+    // Robotic System Boot Sequence
+    const bootSequence = async () => {
+      // 1. Initial system startup
+      await anime({
+        targets: houseRef.current,
+        opacity: [0, 1],
+        scale: [0.8, 1],
+        rotate: [5, 0],
+        duration: 1500,
         easing: 'easeOutElastic(1, .8)',
-        duration: 1200
-      })
-      .add({
-        targets: `.robot-module-${moduleId}`,
-        scale: [1, 1.5],
-        rotateY: [0, 45],
-        translateY: [0, -50],
-        boxShadow: [`0 0 20px rgba(0,255,255,0.3)`, `0 0 50px rgba(0,255,255,0.8)`]
-      })
-      .add({
-        targets: `.module-hologram-${moduleId}`,
-        opacity: [0, 1],
-        scale: [0, 1],
-        rotateY: [180, 0]
-      }, '-=600');
+      }).finished;
 
-      // Close other modules
-      servers.forEach(server => {
-        if (server.id !== moduleId) {
-          anime({
-            targets: `.robot-module-${server.id}`,
-            scale: [1.5, 1],
-            rotateY: [45, 0],
-            translateY: [-50, 0],
-            duration: 800,
-            easing: 'easeOutCubic'
-          });
-        }
-      });
-    }
-  }, [selectedModule, servers]);
-
-  // Server Click Handler (passed to ThreeEnvironment)
-  const handleServerClick = useCallback((serverId: string) => {
-    if (selectedServer === serverId) {
-      // Close server
-      setSelectedServer(null);
-      setRobotMode('idle');
-      
+      // 2. Robotic framework assembly
       anime({
-        targets: '.server-content',
-        opacity: [1, 0],
-        translateY: [0, 50],
-        duration: 500,
-        easing: 'easeInQuart'
+        targets: '.robotic-frame',
+        scaleY: [0, 1],
+        opacity: [0, 0.8],
+        duration: 1000,
+        delay: anime.stagger(200),
+        easing: 'easeOutQuart',
       });
-      
-    } else {
-      // Open new server
-      setSelectedServer(serverId);
-      setRobotMode('processing');
-      
-      anime({
-        targets: '.server-content',
-        opacity: [0, 1],
-        translateY: [50, 0],
-        duration: 800,
-        easing: 'easeOutQuart'
-      });
-    }
-  }, [selectedServer]);
 
-  // Get selected server component
-  const selectedServerData = servers.find(s => s.id === selectedServer);
-  const SelectedServerComponent = selectedServerData?.component;
+      // 3. Power up server rooms with mechanical precision
+      anime({
+        targets: roomsRef.current,
+        translateY: [100, 0],
+        rotateX: [90, 0],
+        opacity: [0, 1],
+        duration: 1200,
+        delay: anime.stagger(300),
+        easing: 'easeOutCubic',
+      });
+
+      // 4. Activate holographic displays
+      setTimeout(() => {
+        anime({
+          targets: '.hologram-display',
+          scale: [0, 1],
+          rotateY: [180, 0],
+          opacity: [0, 0.9],
+          duration: 800,
+          delay: anime.stagger(150),
+          easing: 'easeOutBack',
+        });
+      }, 1000);
+
+      // 5. Initialize robotic elements
+      setTimeout(() => {
+        anime({
+          targets: '.robotic-element',
+          translateX: [-50, 0],
+          rotateZ: [45, 0],
+          opacity: [0, 1],
+          duration: 600,
+          delay: anime.stagger(100),
+          easing: 'easeOutQuart',
+        });
+      }, 1500);
+    };
+
+    bootSequence();
+
+    // Continuous robotic animations
+    const startRoboticAnimations = () => {
+      // Mechanical breathing effect
+      anime({
+        targets: '.server-pulse',
+        scale: [1, 1.08, 1],
+        opacity: [0.7, 1, 0.7],
+        duration: 3000,
+        loop: true,
+        easing: 'easeInOutSine',
+      });
+
+      // Robotic scanner lines
+      anime({
+        targets: '.scanner-line',
+        translateX: ['-100%', '200%'],
+        opacity: [0, 1, 0],
+        duration: 4000,
+        loop: true,
+        delay: anime.stagger(800),
+        easing: 'linear',
+      });
+
+      // Holographic flicker
+      anime({
+        targets: '.hologram-flicker',
+        opacity: [0.3, 1, 0.3],
+        duration: 200,
+        loop: true,
+        direction: 'alternate',
+        easing: 'easeInOutQuart',
+      });
+
+      // Robotic arm movements
+      anime({
+        targets: '.robotic-arm',
+        rotate: [-15, 15],
+        duration: 6000,
+        loop: true,
+        direction: 'alternate',
+        easing: 'easeInOutSine',
+      });
+
+      // Data stream animation
+      anime({
+        targets: '.data-stream',
+        translateY: ['-100%', '100vh'],
+        opacity: [0, 1, 0],
+        duration: 3000,
+        loop: true,
+        delay: anime.stagger(600),
+        easing: 'linear',
+      });
+
+      // Power indicators
+      anime({
+        targets: '.power-indicator',
+        scale: [1, 1.3, 1],
+        rotate: [0, 360],
+        duration: 2000,
+        loop: true,
+        delay: anime.stagger(400),
+        easing: 'easeInOutSine',
+      });
+
+      // Mechanical joints movement
+      anime({
+        targets: '.mechanical-joint',
+        rotateZ: [0, 360],
+        duration: 8000,
+        loop: true,
+        easing: 'linear',
+      });
+    };
+
+    // Start continuous animations after boot sequence
+    setTimeout(startRoboticAnimations, 3000);
+
+  }, []);
+
+  const addRoomRef = (el: HTMLDivElement | null) => {
+    if (el && !roomsRef.current.includes(el)) {
+      roomsRef.current.push(el);
+    }
+  };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
-      {/* Three.js 3D Environment */}
-      <ThreeEnvironment 
-        servers={servers}
-        selectedServer={selectedServer}
-        onServerClick={handleServerClick}
-      />
-      
-      {/* Advanced UI Overlay */}
+    <div ref={houseRef} className="relative min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden">
+      {/* Robotic Environment Background */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Top HUD */}
-        <div className="absolute top-4 left-4 right-4 z-50 pointer-events-auto">
-          <div className="flex justify-between items-center">
-            {/* Left Control Panel */}
-            <div className="bg-black/80 border border-cyan-500/50 rounded-lg p-4 backdrop-blur-md">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Cpu className="w-5 h-5 text-cyan-400" />
-                  <span className="text-cyan-300 text-sm font-mono">NEURAL-OS v3.0</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-green-400" />
-                  <span className="text-green-300 text-sm font-mono">ACTIVE</span>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center space-x-2">
-                <Monitor className="w-4 h-4 text-blue-400" />
-                <div className="text-cyan-300 text-sm">
-                  {selectedServer ? `🎯 ${servers.find(m => m.id === selectedServer)?.name}` : '🤖 AI READY'}
-                </div>
-              </div>
-            </div>
+        {/* Robotic Grid Pattern */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `
+            linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}></div>
 
-            {/* Right Status Panel */}
-            <div className="bg-black/80 border border-cyan-500/50 rounded-lg p-4 backdrop-blur-md">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  <span className="text-yellow-300 text-sm font-mono">THREE.JS</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${robotMode === 'idle' ? 'bg-green-400' : 'bg-cyan-400 animate-pulse'}`} />
-                  <span className="text-cyan-300 text-sm font-mono">{robotMode.toUpperCase()}</span>
-                </div>
-              </div>
+        {/* Data Streams */}
+        <div className="absolute left-10 top-0 w-px h-full bg-gradient-to-b from-transparent via-cyan-400 to-transparent data-stream"></div>
+        <div className="absolute left-32 top-0 w-px h-full bg-gradient-to-b from-transparent via-purple-400 to-transparent data-stream"></div>
+        <div className="absolute right-10 top-0 w-px h-full bg-gradient-to-b from-transparent via-green-400 to-transparent data-stream"></div>
+        <div className="absolute right-32 top-0 w-px h-full bg-gradient-to-b from-transparent via-pink-400 to-transparent data-stream"></div>
+
+        {/* Holographic Overlays */}
+        <div className="absolute top-20 left-20 w-32 h-32 hologram-display hologram-flicker">
+          <div className="w-full h-full border border-cyan-400/50 bg-cyan-400/10 rounded-lg backdrop-blur-sm">
+            <div className="p-4 text-xs text-cyan-300">
+              <div>SYSTEM STATUS</div>
+              <div className="mt-2 text-green-400">● ONLINE</div>
             </div>
           </div>
         </div>
 
-        {/* Server Content Panel */}
-        {selectedServer && SelectedServerComponent && (
-          <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-auto">
-            <div className="server-content bg-black/90 border-2 border-cyan-500/50 rounded-2xl p-8 max-w-4xl max-h-[80vh] overflow-auto backdrop-blur-xl">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  {selectedServerData.icon && (
-                    <selectedServerData.icon className="w-8 h-8 text-cyan-400" />
-                  )}
-                  <div>
-                    <h2 className="text-2xl font-bold text-cyan-300">{selectedServerData.name}</h2>
-                    <p className="text-cyan-500">{selectedServerData.description}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleServerClick(selectedServer)}
-                  className="px-4 py-2 bg-red-600/20 border border-red-500/50 text-red-300 rounded-lg hover:bg-red-600/30 transition-all"
-                >
-                  CLOSE
-                </button>
-              </div>
-              <SelectedServerComponent />
+        <div className="absolute top-40 right-20 w-28 h-20 hologram-display hologram-flicker">
+          <div className="w-full h-full border border-purple-400/50 bg-purple-400/10 rounded-lg backdrop-blur-sm">
+            <div className="p-3 text-xs text-purple-300">
+              <div>ROOMS ACTIVE</div>
+              <div className="mt-1 text-yellow-400">6/6</div>
             </div>
           </div>
-        )}
-
-        {/* Robot Guide */}
-        <div className="absolute bottom-4 right-4 z-50">
-          <RobotGuide 
-            position={{ x: 0, y: 0 }}
-            isMoving={robotMode !== 'idle'}
-            onReturnHome={() => {
-              setSelectedServer(null);
-              setRobotMode('idle');
-            }}
-          />
         </div>
       </div>
 
-      {/* Holographic UI Effects */}
-      <div 
-        ref={hologramRef}
-        className="absolute inset-0 pointer-events-none"
-      >
-        {/* Scanning lines */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent animate-pulse" />
-        
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <div 
-            className="w-full h-full" 
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }}
-          />
+      {/* Server House Container */}
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Robotic Control Panel */}
+        <div className="text-center mb-12 robotic-element">
+          <div className="inline-block bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-md rounded-xl p-6 border border-cyan-500/30">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2 hologram-flicker">
+              ROBOTIC SERVER HOUSE
+            </h1>
+            <div className="text-cyan-300 text-sm">Prince Mashumu's Digital Portfolio System</div>
+            <div className="flex justify-center space-x-4 mt-4">
+              <div className="power-indicator w-3 h-3 bg-green-400 rounded-full"></div>
+              <div className="power-indicator w-3 h-3 bg-blue-400 rounded-full"></div>
+              <div className="power-indicator w-3 h-3 bg-purple-400 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* House Structure */}
+        <div className="relative">
+          {/* Server House Grid - Like floors of a robotic building */}
+          <div className="grid gap-8 max-w-7xl mx-auto">
+            
+            {/* Ground Floor - Main Server Room (Hero) */}
+            <div ref={addRoomRef} className="relative robotic-element">
+              <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl blur-lg server-pulse"></div>
+              <div className="relative">
+                <ServerRoom />
+                {/* Robotic Scanner */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent scanner-line"></div>
+              </div>
+            </div>
+
+            {/* Robotic Divider */}
+            <div className="flex justify-center">
+              <div className="mechanical-joint w-8 h-8 border-2 border-cyan-400 rounded-full bg-slate-800 flex items-center justify-center">
+                <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+
+            {/* Second Floor - Database & Code Lab */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <div ref={addRoomRef} className="relative robotic-element">
+                <div className="absolute -inset-2 bg-gradient-to-r from-green-500/20 to-cyan-500/20 rounded-xl blur-lg server-pulse"></div>
+                <div className="relative">
+                  <DatabaseRoom />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent scanner-line"></div>
+                </div>
+              </div>
+              <div ref={addRoomRef} className="relative robotic-element">
+                <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur-lg server-pulse"></div>
+                <div className="relative">
+                  <CodeLaboratory />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent scanner-line"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Robotic Arm Connector */}
+            <div className="flex justify-center">
+              <div className="robotic-arm w-16 h-2 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full relative">
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-cyan-400 rounded-full mechanical-joint"></div>
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-purple-400 rounded-full mechanical-joint"></div>
+              </div>
+            </div>
+
+            {/* Third Floor - Projects & Communication */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <div ref={addRoomRef} className="relative robotic-element">
+                <div className="absolute -inset-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl blur-lg server-pulse"></div>
+                <div className="relative">
+                  <ProjectWarehouse />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent scanner-line"></div>
+                </div>
+              </div>
+              <div ref={addRoomRef} className="relative robotic-element">
+                <div className="absolute -inset-2 bg-gradient-to-r from-pink-500/20 to-red-500/20 rounded-xl blur-lg server-pulse"></div>
+                <div className="relative">
+                  <CommunicationHub />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-pink-400 to-transparent scanner-line"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Robotic Joint */}
+            <div className="flex justify-center">
+              <div className="mechanical-joint w-12 h-12 border-4 border-green-400 rounded-full bg-slate-800 flex items-center justify-center">
+                <div className="w-4 h-4 bg-green-400 rounded-full power-indicator"></div>
+              </div>
+            </div>
+
+            {/* Fourth Floor - System Status */}
+            <div ref={addRoomRef} className="relative robotic-element">
+              <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl blur-lg server-pulse"></div>
+              <div className="relative">
+                <SystemStatus />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent scanner-line"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Robotic Framework Structure */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Main Robotic Frame */}
+            <div className="robotic-frame absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-cyan-500 via-purple-500 to-cyan-500 opacity-60"></div>
+            <div className="robotic-frame absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-purple-500 via-cyan-500 to-purple-500 opacity-60"></div>
+            
+            {/* Horizontal Connection Lines */}
+            <div className="robotic-frame absolute top-1/6 left-4 right-4 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60"></div>
+            <div className="robotic-frame absolute top-2/6 left-4 right-4 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-60"></div>
+            <div className="robotic-frame absolute top-3/6 left-4 right-4 h-px bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-60"></div>
+            <div className="robotic-frame absolute top-4/6 left-4 right-4 h-px bg-gradient-to-r from-transparent via-yellow-400 to-transparent opacity-60"></div>
+            <div className="robotic-frame absolute top-5/6 left-4 right-4 h-px bg-gradient-to-r from-transparent via-pink-400 to-transparent opacity-60"></div>
+          </div>
+
+          {/* Robotic Indicators */}
+          <div className="absolute -left-12 top-1/6 power-indicator">
+            <div className="w-4 h-4 bg-green-400 rounded-full border-2 border-green-300"></div>
+          </div>
+          <div className="absolute -right-12 top-2/6 power-indicator">
+            <div className="w-4 h-4 bg-blue-400 rounded-full border-2 border-blue-300"></div>
+          </div>
+          <div className="absolute -left-12 top-3/6 power-indicator">
+            <div className="w-4 h-4 bg-purple-400 rounded-full border-2 border-purple-300"></div>
+          </div>
+          <div className="absolute -right-12 top-4/6 power-indicator">
+            <div className="w-4 h-4 bg-yellow-400 rounded-full border-2 border-yellow-300"></div>
+          </div>
+          <div className="absolute -left-12 top-5/6 power-indicator">
+            <div className="w-4 h-4 bg-pink-400 rounded-full border-2 border-pink-300"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Robotic Status Bar */}
+      <div className="fixed bottom-4 left-4 right-4 robotic-element">
+        <div className="bg-slate-900/90 backdrop-blur-md rounded-lg p-3 border border-cyan-500/30">
+          <div className="flex justify-between items-center text-xs">
+            <div className="text-cyan-300">SYSTEM: OPERATIONAL</div>
+            <div className="flex space-x-4">
+              <div className="text-green-400">CPU: 98%</div>
+              <div className="text-blue-400">MEMORY: 76%</div>
+              <div className="text-purple-400">NETWORK: STABLE</div>
+            </div>
+            <div className="text-yellow-400">ROOMS: 6 ACTIVE</div>
+          </div>
         </div>
       </div>
     </div>

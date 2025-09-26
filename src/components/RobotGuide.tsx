@@ -237,7 +237,69 @@ const RobotGuide: React.FC<RobotGuideProps> = ({ position, isMoving, onReturnHom
       </div>
 
       {/* Introduction Messages */}
-     
+      {showMessage && !isMoving && (
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-30">
+          <div 
+            onClick={handleMessageClick}
+            className="bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white px-5 py-3 rounded-2xl text-sm shadow-2xl border border-cyan-300/30 backdrop-blur-sm cursor-pointer hover:scale-105 transition-all duration-300 relative group"
+            style={{ minWidth: '280px', textAlign: 'center' }}
+          >
+            <div className={`transition-opacity duration-300 ${isTyping ? 'opacity-50' : 'opacity-100 animate-fade-in-up'}`}>
+              {getContextualMessage()}
+            </div>
+            
+            {/* Typing indicator */}
+            {isTyping && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                </div>
+              </div>
+            )}
+
+            {/* Speech bubble tail */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent border-t-cyan-500" />
+            
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-purple-400/20 rounded-2xl blur-sm group-hover:blur-md transition-all duration-300 -z-10"></div>
+            
+            {/* Message counter dots - only show at home */}
+            {position.x === 50 && position.y === 50 && (
+              <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {messages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isTyping) {
+                        setIsTyping(true);
+                        setTimeout(() => {
+                          setCurrentMessageIndex(index);
+                          setIsTyping(false);
+                        }, 300);
+                      }
+                    }}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 ${
+                      index === currentMessageIndex
+                        ? 'bg-cyan-400 shadow-lg shadow-cyan-400/50 scale-125'
+                        : 'bg-gray-400 hover:bg-gray-300 scale-75'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Click hint - only show at home */}
+            {position.x === 50 && position.y === 50 && (
+              <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                Click to change message
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Speech Bubble */}
       {isMoving && (

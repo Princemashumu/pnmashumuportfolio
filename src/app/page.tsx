@@ -1,12 +1,8 @@
 'use client';
 
 import React from 'react';
-import ServerHouse from '@/components/ServerHouse';
+import Portfolio3D from '@/components/Portfolio3D';
 
 export default function Home() {
-  return (
-    <main className="min-h-screen overflow-hidden">
-      <ServerHouse />
-    </main>
-  );
+  return <Portfolio3D />;
 }
