@@ -255,7 +255,8 @@ const Knight4D: React.FC<{ position: [number, number, number], id: number }> = (
 };
 
 // Village Environment Component
-const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
+const VillageEnvironment: React.FC<{ rooms: any[], onRoomClick: (roomId: string) => void, activeRoom?: string }> = ({ rooms, onRoomClick, activeRoom }) => {
+  const { camera } = useThree();
   // Define the tech-themed house names
   const houseNames = [
     'Main Server Core',
@@ -302,8 +303,17 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
         
         const style = houseStyles[index % houseStyles.length];
         
+        // Calculate distance from camera to house
+        const housePosition = [x, style.height / 2, z];
+        const camPos = camera.position;
+        const dist = Math.sqrt(
+          Math.pow(camPos.x - housePosition[0], 2) +
+          Math.pow(camPos.y - housePosition[1], 2) +
+          Math.pow(camPos.z - housePosition[2], 2)
+        );
+        
         return (
-          <group key={room.id} position={[x, style.height / 2, z]}>
+          <group key={room.id} position={housePosition} onClick={() => onRoomClick(room.id)}>
             {/* Main house structure */}
             <Box args={[style.width, style.height, style.depth]}>
               <meshStandardMaterial 
@@ -670,18 +680,20 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
               <meshStandardMaterial color="#8B4513" />
             </Box>
             
-            {/* House name text on front wall */}
-            <Html 
-              position={[0, -style.height / 2 + 2.8, style.depth / 2 + 0.1]} 
-              center 
-              transform 
-              occlude
-              style={{ pointerEvents: 'none' }}
-            >
-              <div className="text-white font-bold text-sm bg-transparent select-none">
-                {houseNames[index] || room.name}
-              </div>
-            </Html>
+            {/* House name text on front wall - only visible if camera is close and not open */}
+            {dist < 6 && activeRoom !== room.id && (
+              <Html 
+                position={[0, -style.height / 2 + 2.8, style.depth / 2 + 0.1]} 
+                center 
+                transform 
+                occlude
+                style={{ pointerEvents: 'none' }}
+              >
+                <div className="text-white font-bold text-sm bg-transparent select-none">
+                  {houseNames[index] || room.name}
+                </div>
+              </Html>
+            )}
           </group>
         );
       })}
@@ -1076,20 +1088,16 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
           <meshStandardMaterial color="#8B4513" />
         </Box>
         
-
-        
-        {/* Directional signs for each house */}
+        {/* Directional signs for each house (no Html label) */}
         {rooms.slice(0, 5).map((room, index) => {
           const angle = (index / 5) * Math.PI * 2;
           const signHeight = 1.6 - index * 0.25;
-          
           // Calculate direction from sign post to house
           const houseRadius = 15;
           const houseX = Math.cos(angle) * houseRadius;
           const houseZ = Math.sin(angle) * houseRadius;
           const signX = 6; // sign post x position
           const signZ = 8; // sign post z position
-          
           // Direction vector from sign to house
           const dirX = houseX - signX;
           const dirZ = houseZ - signZ;
@@ -1121,19 +1129,7 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
               <Box args={[0.25, 0.08, 0.05]} position={[0.2, 0, 0.03]}>
                 <meshStandardMaterial color="#000080" />
               </Box>
-              
-              {/* House name text directly on sign board */}
-              <Html 
-                position={[0.75, 0, 0.07]} 
-                center 
-                transform 
-                occlude
-                style={{ pointerEvents: 'none' }}
-              >
-                <div className="text-white font-bold text-xs bg-transparent select-none">
-                  {houseNames[index] || room.name}
-                </div>
-              </Html>
+              {/* No Html label here */}
             </group>
           );
         })}
@@ -1154,8 +1150,6 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
           <Box args={[0.1, 0.05, 0.03]} position={[0, -0.08, 0.03]} rotation={[0, 0, -Math.PI / 4]}>
             <meshStandardMaterial color="#FFD700" />
           </Box>
-          
-
         </group>
       </group>
       
@@ -1172,6 +1166,16 @@ const VillageEnvironment: React.FC<{ rooms: any[] }> = ({ rooms }) => {
       })}
     </group>
   );
+};
+
+// 4D Room Components - Lazy loaded
+const roomComponents: Record<string, React.FC> = {
+  'main-server-core': require('./rooms/MainServerCore').default,
+  'code-laboratory': require('./rooms/CodeLaboratory').default,
+  'database-room': require('./rooms/DatabaseRoom').default,
+  'project-warehouse': require('./rooms/ProjectWarehouse').default,
+  'communication-hub': require('./rooms/CommunicationHub').default,
+  'system-status': require('./rooms/SystemStatus').default,
 };
 
 // Main ThreeEnvironment Component Types
@@ -1194,6 +1198,7 @@ const ThreeEnvironment: React.FC<ThreeEnvironmentProps> = ({
   isRobotMoving,
   onRoomClick
 }) => {
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [blenderEnabled, setBlenderEnabled] = useState(false);
   const [selectedBlenderCharacter, setSelectedBlenderCharacter] = useState<string | null>(null);
 
@@ -1219,10 +1224,8 @@ const ThreeEnvironment: React.FC<ThreeEnvironmentProps> = ({
             shadow-mapSize-height={2048}
           />
           <pointLight position={[0, 10, 0]} intensity={0.8} color="#FFD700" />
-          
-          {/* Village Environment */}
-          <VillageEnvironment rooms={rooms} />
-          
+          {/* Village Environment with house click integration and activeRoom prop */}
+          <VillageEnvironment rooms={rooms} onRoomClick={setActiveRoom} activeRoom={activeRoom || undefined} />
           {/* Camera Controls */}
           <OrbitControls 
             enablePan={true}
@@ -1233,7 +1236,6 @@ const ThreeEnvironment: React.FC<ThreeEnvironmentProps> = ({
           />
         </Suspense>
       </Canvas>
-
       {/* Game HUD - Top Left */}
       <div className="absolute top-4 left-4 text-white z-10">
         <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-700/95 backdrop-blur-lg border-2 border-green-500/50 rounded-xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[280px]">
@@ -1288,6 +1290,35 @@ const ThreeEnvironment: React.FC<ThreeEnvironmentProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Room Content Modal Overlay */}
+      {activeRoom && (
+        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setActiveRoom(null)}>
+          <div className="bg-slate-900/95 backdrop-blur-md border border-cyan-500/30 rounded-xl w-full max-w-6xl min-h-[70vh] max-h-[90vh] overflow-y-auto flex flex-col gap-6 p-12" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-slate-900/95 backdrop-blur-md border-b border-cyan-500/30 p-6 flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-cyan-400">
+                {rooms.find(r => r.id === activeRoom)?.name}
+              </h2>
+              <button onClick={() => setActiveRoom(null)} className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-6 py-3 rounded-lg transition-colors duration-200 text-lg">Close</button>
+            </div>
+            <div className="flex-1 flex flex-col gap-6 items-center justify-center w-full">
+              {roomComponents[activeRoom] ? (
+                <div className={`room-details room-${activeRoom} w-full max-w-3xl mx-auto p-8 rounded-xl shadow-lg border-2 ${
+                  activeRoom === 'main-server-core' ? 'bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 border-indigo-500' :
+                  activeRoom === 'code-laboratory' ? 'bg-gradient-to-br from-green-900 via-emerald-900 to-slate-900 border-green-500' :
+                  activeRoom === 'database-room' ? 'bg-gradient-to-br from-red-900 via-orange-900 to-slate-900 border-red-500' :
+                  activeRoom === 'project-warehouse' ? 'bg-gradient-to-br from-purple-900 via-violet-900 to-slate-900 border-purple-500' :
+                  activeRoom === 'communication-hub' ? 'bg-gradient-to-br from-cyan-900 via-blue-900 to-slate-900 border-cyan-500' :
+                  activeRoom === 'system-status' ? 'bg-gradient-to-br from-yellow-900 via-orange-900 to-slate-900 border-yellow-500' :
+                  'bg-slate-900 border-slate-700'
+                }`}>
+                  {React.createElement(roomComponents[activeRoom])}
+                </div>
+              ) : <div className="text-white">Room not found.</div>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

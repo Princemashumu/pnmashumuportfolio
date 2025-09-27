@@ -108,41 +108,41 @@ const SystemStatus: React.FC = () => {
     <section id="status" className="relative">
       <div
         ref={roomRef}
-        className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-cyan-500/30 shadow-2xl shadow-cyan-500/10"
+        className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-10 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 max-w-3xl mx-auto"
       >
         {/* Room Header */}
-        <div className="flex items-center mb-8">
-          <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center mr-4">
-            <Activity size={28} className="text-white" />
+        <div className="flex items-center mb-10 gap-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center">
+            <Activity size={36} className="text-white" />
           </div>
           <div>
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            <h3 className="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1">
               System Status
             </h3>
-            <p className="text-gray-400 text-lg">Experience & Metrics</p>
+            <p className="text-gray-400 text-lg font-medium">Experience & Metrics</p>
           </div>
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-8 mb-10">
           {metrics.map((metric) => {
             const IconComponent = metric.icon;
             return (
               <div
                 key={metric.label}
                 ref={addMetricRef}
-                className={`${getColorClasses(metric.color)} rounded-lg p-6 border hover:scale-105 transition-all duration-300 cursor-pointer`}
+                className={`flex flex-col items-center justify-center ${getColorClasses(metric.color)} rounded-xl p-7 border-2 font-semibold hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg shadow-cyan-500/10`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <IconComponent size={24} />
-                  <span className="text-xs font-semibold bg-white/20 px-2 py-1 rounded">
+                <div className="flex items-center gap-2 mb-3">
+                  <IconComponent size={28} />
+                  <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded">
                     {metric.trend}
                   </span>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-4xl font-extrabold text-white mb-1">
                   {metric.value}
                 </div>
-                <div className="text-sm text-gray-300">
+                <div className="text-base text-gray-200">
                   {metric.label}
                 </div>
               </div>
@@ -151,33 +151,30 @@ const SystemStatus: React.FC = () => {
         </div>
 
         {/* Experience Timeline */}
-        <div className="bg-slate-800/50 rounded-lg p-6 border border-cyan-500/20">
-          <h4 className="text-xl font-bold text-white mb-6 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-cyan-400" />
+        <div className="bg-slate-800/70 rounded-xl p-8 border-2 border-cyan-500/30 mb-8">
+          <h4 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-cyan-400" />
             Experience Timeline
           </h4>
-          
-          <div className="space-y-4">
+          <div className="space-y-6">
             {experiences.map((exp, index) => (
               <div
                 key={exp.title}
                 ref={addMetricRef}
-                className="flex items-center p-4 bg-slate-700/30 rounded-lg border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300"
+                className="flex items-center p-5 bg-slate-700/40 rounded-xl border border-cyan-500/30 hover:border-cyan-500/50 transition-all duration-300 gap-6"
               >
-                <div className={`w-3 h-3 rounded-full mr-4 ${
+                <div className={`w-4 h-4 rounded-full ${
                   exp.type === 'Current' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
                 }`}></div>
-                
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h5 className="text-white font-semibold">{exp.title}</h5>
-                    <span className="text-cyan-400 text-sm">{exp.period}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <h5 className="text-lg text-white font-bold">{exp.title}</h5>
+                    <span className="text-cyan-400 text-sm font-semibold">{exp.period}</span>
                   </div>
-                  <p className="text-gray-400 text-sm">{exp.company}</p>
+                  <p className="text-gray-300 text-base">{exp.company}</p>
                 </div>
-                
                 {exp.type === 'Current' && (
-                  <div className="bg-green-500 text-white text-xs px-2 py-1 rounded">
+                  <div className="bg-green-500 text-white text-xs px-3 py-1 rounded font-bold">
                     Active
                   </div>
                 )}
@@ -187,30 +184,29 @@ const SystemStatus: React.FC = () => {
         </div>
 
         {/* System Health */}
-        <div className="mt-6 grid md:grid-cols-2 gap-4">
-          <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-green-400 font-semibold">Career Health</span>
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+        <div className="mt-8 grid md:grid-cols-2 gap-6">
+          <div className="bg-green-500/20 border-2 border-green-500/40 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-green-400 font-bold text-lg">Career Health</span>
+              <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
             </div>
-            <p className="text-gray-300 text-sm mt-2">All systems operational</p>
+            <p className="text-gray-200 text-base mt-1">All systems operational</p>
           </div>
-          
-          <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-blue-400 font-semibold">Learning Status</span>
-              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
+          <div className="bg-blue-500/20 border-2 border-blue-500/40 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-blue-400 font-bold text-lg">Learning Status</span>
+              <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
             </div>
-            <p className="text-gray-300 text-sm mt-2">Continuous improvement</p>
+            <p className="text-gray-200 text-base mt-1">Continuous improvement</p>
           </div>
         </div>
 
         {/* System Status Bar */}
-        <div className="mt-6 bg-slate-800/50 rounded-lg p-4 border border-cyan-500/20">
-          <div className="flex items-center justify-between text-sm text-gray-400">
-            <span>Overall Status: Excellent</span>
+        <div className="mt-8 bg-slate-800/70 rounded-xl p-6 border-2 border-cyan-500/30">
+          <div className="flex items-center justify-between text-base text-gray-300 font-semibold">
+            <span>Overall Status: <span className="text-green-400">Excellent</span></span>
             <span>Last Updated: {new Date().toLocaleDateString()}</span>
-            <span>Availability: 100%</span>
+            <span>Availability: <span className="text-blue-400">100%</span></span>
           </div>
         </div>
       </div>
